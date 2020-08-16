@@ -17,8 +17,11 @@ parser.add_argument("-c", "--cleantag",
 parser.add_argument("-m", "--modifytags",
                     help="modify existing tags",
                     action="store_true")
+parser.add_argument("-a", "--autorename",
+                    help="automatically rename files after tagging to kebab case",
+                    action="store_true")
 parser.add_argument("-r", "--rename",
-                    help="rename files after tagging to kebab case",
+                    help="rename files manually after tagging",
                     action="store_true")
 args = parser.parse_args()
 
@@ -49,22 +52,26 @@ def copy_file(directory, filepath):
 
 
 def rename_file(filepath):
-    try:
-        # Get the info from audio file
-        audiofile = EasyID3(filepath)
-        currTitle = audiofile["title"]
-        currArtist = audiofile["artist"]
-        filename = os.path.basename(filepath)
-        # Prepare the new name
-        filename = spaces_to_kebab_case(
-            "{0}-{1}.mp3".format(currTitle[0], currArtist[0]))
-        dirname = os.path.dirname(filepath)
-        # Rename
-        os.rename(filepath, os.path.join(dirname, filename))
-        print("Renamed file: ", filename)
-    except Exception as e:
-        print("Rename failed! ", e)
-        sys.exit(1)
+    if args.autorename or args.rename:
+        try:
+            # Get the info from audio file
+            audiofile = EasyID3(filepath)
+            currTitle = audiofile["title"]
+            currArtist = audiofile["artist"]
+            filename = os.path.basename(filepath)
+            # Prepare the new name
+            if args.autorename:
+                filename = spaces_to_kebab_case(
+                    "{0}-{1}.mp3".format(currTitle[0], currArtist[0]))
+            elif args.rename:
+                filename = input("Filename: ")
+            dirname = os.path.dirname(filepath)
+            # Rename
+            os.rename(filepath, os.path.join(dirname, filename))
+            print("Renamed file: ", filename)
+        except Exception as e:
+            print("Rename failed! ", e)
+            sys.exit(1)
 
 
 def tag(filepath):
@@ -79,7 +86,7 @@ def tag(filepath):
         if args.cleantag:
             audiofile.delete()
         # Change tags
-        if args.cleantag and args.modifytags:
+        if args.cleantag:
             print("New Info ", os.path.basename(filepath))
             newTitle = input("Title: ")
             newArtist = input("Artist: ")
@@ -119,12 +126,10 @@ if __name__ == "__main__":
             x = copy_file(os.path.join(os.path.dirname(
                 os.path.realpath(__file__)), "output"), filepath)
             if tag(x):
-                if args.rename:
-                    rename_file(x)
+                rename_file(x)
     else:
         create_director_if_does_not_exist("output")
         x = copy_file(os.path.join(os.path.dirname(
             os.path.realpath(__file__)), "output"), filepath)
         if tag(x):
-            if args.rename:
-                rename_file(x)
+            rename_file(x)
