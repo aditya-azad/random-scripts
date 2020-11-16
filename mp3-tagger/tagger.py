@@ -36,8 +36,12 @@ def get_all_files_in_dir(directory):
     return files
 
 
-def spaces_to_kebab_case(name):
-    return name.replace(' ', '-').lower()
+def clean_name(name):
+    name = name.replace(' ', '-').lower()
+    special_chars = [';', ':', '^', '@', '!', '$', '%', '&', '*', '(', ')', '<', '>', '?', '/', '+', '_', '\"', '\'']
+    for i in special_chars:
+        name = name.replace(i, '')
+    return name
 
 
 def copy_file(directory, filepath):
@@ -61,7 +65,7 @@ def rename_file(filepath):
             filename = os.path.basename(filepath)
             # Prepare the new name
             if args.autorename:
-                filename = spaces_to_kebab_case(
+                filename = clean_name(
                     "{0}-{1}.mp3".format(currTitle[0], currArtist[0]))
             elif args.rename:
                 filename = input("Filename: ")
